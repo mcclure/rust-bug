@@ -1,7 +1,6 @@
 // Sample code from https://crates.io/crates/pom , modified to take input from a file.
 
 use pom::parser::*;
-use pom::Parser;
 
 use std::collections::HashMap;
 use std::str::{self, FromStr};
@@ -16,11 +15,11 @@ pub enum JsonValue {
 	Object(HashMap<String,JsonValue>)
 }
 
-fn space() -> Parser<u8, ()> {
+fn space<'a>() -> Parser<'a, u8, ()> {
 	one_of(b" \t\r\n").repeat(0..).discard()
 }
 
-fn number() -> Parser<u8, f64> {
+fn number<'a>() -> Parser<'a, u8, f64> {
 	let integer = one_of(b"123456789") - one_of(b"0123456789").repeat(0..) | sym(b'0');
 	let frac = sym(b'.') + one_of(b"0123456789").repeat(1..);
 	let exp = one_of(b"eE") + one_of(b"+-").opt() + one_of(b"0123456789").repeat(1..);
@@ -28,7 +27,7 @@ fn number() -> Parser<u8, f64> {
 	number.collect().convert(str::from_utf8).convert(|s|f64::from_str(&s))
 }
 
-fn string() -> Parser<u8, String> {
+fn string<'a>() -> Parser<'a, u8, String> {
 	let special_char = sym(b'\\') | sym(b'/') | sym(b'"')
 		| sym(b'b').map(|_|b'\x08') | sym(b'f').map(|_|b'\x0C')
 		| sym(b'n').map(|_|b'\n') | sym(b'r').map(|_|b'\r') | sym(b't').map(|_|b'\t');
@@ -37,19 +36,19 @@ fn string() -> Parser<u8, String> {
 	string.convert(String::from_utf8)
 }
 
-fn array() -> Parser<u8, Vec<JsonValue>> {
+fn array<'a>() -> Parser<'a, u8, Vec<JsonValue>> {
 	let elems = list(call(value), sym(b',') * space());
 	sym(b'[') * space() * elems - sym(b']')
 }
 
-fn object() -> Parser<u8, HashMap<String, JsonValue>> {
+fn object<'a>() -> Parser<'a, u8, HashMap<String, JsonValue>> {
 	let member = string() - space() - sym(b':') - space() + call(value);
 	let members = list(member, sym(b',') * space());
 	let obj = sym(b'{') * space() * members - sym(b'}');
 	obj.map(|members|members.into_iter().collect::<HashMap<_,_>>())
 }
 
-fn value() -> Parser<u8, JsonValue> {
+fn value<'a>() -> Parser<'a, u8, JsonValue> {
 	( seq(b"null").map(|_|JsonValue::Null)
 	| seq(b"true").map(|_|JsonValue::Bool(true))
 	| seq(b"false").map(|_|JsonValue::Bool(false))
@@ -60,7 +59,7 @@ fn value() -> Parser<u8, JsonValue> {
 	) - space()
 }
 
-pub fn json() -> Parser<u8, JsonValue> {
+pub fn json<'a>() -> Parser<'a, u8, JsonValue> {
 	space() * value() - end()
 }
 
