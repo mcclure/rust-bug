@@ -1,4 +1,4 @@
-// Sample code from https://crates.io/crates/pom
+// Sample code from https://crates.io/crates/pom , modified to take input from a file.
 
 use pom::parser::*;
 use pom::Parser;
@@ -64,22 +64,15 @@ pub fn json() -> Parser<u8, JsonValue> {
 	space() * value() - end()
 }
 
-fn main() {
-	let input = br#"
-	{
-        "Image": {
-            "Width":  800,
-            "Height": 600,
-            "Title":  "View from 15th Floor",
-            "Thumbnail": {
-                "Url":    "http://www.example.com/image/481989943",
-                "Height": 125,
-                "Width":  100
-            },
-            "Animated" : false,
-            "IDs": [116, 943, 234, 38793]
-        }
-    }"#;
+fn get_input() -> Option<String> {
+	let filename = std::env::args().fuse().nth(1)?;
+	return std::fs::read_to_string(filename).ok();
+}
 
-	println!("{:?}", json().parse(input));
+fn main() {
+	if let Some(input) = get_input() {
+		println!("{:?}", json().parse(input.as_bytes()));
+	} else {
+		println!("Expected path to file as argument.")
+	}
 }
