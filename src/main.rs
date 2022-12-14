@@ -21,7 +21,7 @@ const STRING1: &str = "[
 const STRING2: &str = STRING1;
 
 fn main() {
-	// let _enabled = ansi_term::enable_ansi_support();
+	let _enabled = ansi_term::enable_ansi_support();
 	let gray1 = Style::new().on(Fixed(236));
 	let gray2 = Style::new().on(Fixed(237));
 
